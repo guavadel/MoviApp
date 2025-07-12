@@ -14,10 +14,18 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ success: true, message: 'Server is running' });
+});
+
 // Routes
 app.post('/api/track-search-term', async (req, res) => {
   try {
     const { searchTerm } = req.body;
+    if (!searchTerm) {
+      return res.status(400).json({ success: false, error: 'Search term is required' });
+    }
     const trackedTerm = await DatabaseService.trackSearchTerm(searchTerm);
     res.json({ success: true, term: trackedTerm });
   } catch (error) {
