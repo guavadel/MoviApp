@@ -1,56 +1,50 @@
-const SearchTerm = require('../models/SearchTerm');
+const Movie = require('../models/Movie');
 
 class DatabaseService {
-  // Track search term
-  static async trackSearchTerm(searchTerm) {
+  // Track movie search
+  static async trackMovieSearch(movieData) {
     try {
-      let term = await SearchTerm.findOne({ term: searchTerm.toLowerCase() });
+      const { id, title, overview, poster_path, release_date, vote_average, vote_count } = movieData;
       
-      if (term) {
-        term.searchCount += 1;
-        term.lastSearched = new Date();
-        term.trendingScore = this.calculateTrendingScore(term.searchCount, term.lastSearched);
-        await term.save();
+      let movie = await Movie.findOne({ tmdbId: id });
+      
+      if (movie) {
+        movie.searchCount += 1;
+        movie.lastSearched = new Date();
+        movie.trendingScore = this.calculateTrendingScore(movie.searchCount, movie.lastSearched);
+        await movie.save();
       } else {
-        term = new SearchTerm({
-          term: searchTerm.toLowerCase(),
+        movie = new Movie({
+          tmdbId: id,
+          title,
+          overview,
+          posterPath: poster_path,
+          releaseDate: release_date,
+          voteAverage: vote_average,
+          voteCount: vote_count,
           searchCount: 1,
           trendingScore: this.calculateTrendingScore(1, new Date())
         });
-        await term.save();
+        await movie.save();
       }
       
-      return term;
+      return movie;
     } catch (error) {
-      console.error('Error tracking search term:', error);
+      console.error('Error tracking movie search:', error);
       throw error;
     }
   }
 
-  // Get trending search terms with exponential decay
-  static async getTrendingSearchTerms(limit = 10) {
+  // Get trending movies with exponential decay
+  static async getTrendingMovies(limit = 10) {
     try {
-      const terms = await SearchTerm.find()
+      const movies = await Movie.find()
         .sort({ trendingScore: -1, searchCount: -1 })
         .limit(limit);
       
-      return terms;
+      return movies;
     } catch (error) {
-      console.error('Error getting trending search terms:', error);
-      throw error;
-    }
-  }
-
-  // Get most searched terms
-  static async getMostSearchedTerms(limit = 10) {
-    try {
-      const terms = await SearchTerm.find()
-        .sort({ searchCount: -1 })
-        .limit(limit);
-      
-      return terms;
-    } catch (error) {
-      console.error('Error getting most searched terms:', error);
+      console.error('Error getting trending movies:', error);
       throw error;
     }
   }

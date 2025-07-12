@@ -14,18 +14,21 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'Server is running' });
+// Routes
+app.post('/api/track-search', async (req, res) => {
+  try {
+    const { movieData } = req.body;
+    const trackedMovie = await DatabaseService.trackMovieSearch(movieData);
+    res.json({ success: true, movie: trackedMovie });
+  } catch (error) {
+    console.error('Error tracking search:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
-// Routes
 app.post('/api/track-search-term', async (req, res) => {
   try {
     const { searchTerm } = req.body;
-    if (!searchTerm) {
-      return res.status(400).json({ success: false, error: 'Search term is required' });
-    }
     const trackedTerm = await DatabaseService.trackSearchTerm(searchTerm);
     res.json({ success: true, term: trackedTerm });
   } catch (error) {
@@ -34,14 +37,14 @@ app.post('/api/track-search-term', async (req, res) => {
   }
 });
 
-// Trending search terms with exponential decay
+// Trending movies with exponential decay
 app.get('/api/trending', async (req, res) => {
   try {
     const { limit = 10 } = req.query;
-    const trendingTerms = await DatabaseService.getTrendingSearchTerms(parseInt(limit));
-    res.json({ success: true, terms: trendingTerms });
+    const trendingMovies = await DatabaseService.getTrendingMovies(parseInt(limit));
+    res.json({ success: true, movies: trendingMovies });
   } catch (error) {
-    console.error('Error getting trending search terms:', error);
+    console.error('Error getting trending movies:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
