@@ -1,99 +1,71 @@
-const Movie = require('../models/Movie');
+const SearchTerm = require('../models/SearchTerm');
 
 class DatabaseService {
-  // Track movie search
-  static async trackMovieSearch(movieData) {
+  // Track search term
+  static async trackSearchTerm(searchTerm) {
     try {
-      const { id, title, overview, poster_path, release_date, vote_average, vote_count } = movieData;
+      let term = await SearchTerm.findOne({ term: searchTerm.toLowerCase() });
       
-      // Find existing movie or create new one
-      let movie = await Movie.findOne({ tmdbId: id });
-      
-      if (movie) {
-        // Update existing movie
-        movie.searchCount += 1;
-        movie.lastSearched = new Date();
-        movie.trendingScore = this.calculateTrendingScore(movie.searchCount, movie.lastSearched);
-        await movie.save();
+      if (term) {
+        term.searchCount += 1;
+        term.lastSearched = new Date();
+        term.trendingScore = this.calculateTrendingScore(term.searchCount, term.lastSearched);
+        await term.save();
       } else {
-        // Create new movie
-        movie = new Movie({
-          tmdbId: id,
-          title,
-          overview,
-          posterPath: poster_path,
-          releaseDate: release_date,
-          voteAverage: vote_average,
-          voteCount: vote_count,
+        term = new SearchTerm({
+          term: searchTerm.toLowerCase(),
           searchCount: 1,
           trendingScore: this.calculateTrendingScore(1, new Date())
         });
-        await movie.save();
+        await term.save();
       }
       
-      return movie;
+      return term;
     } catch (error) {
-      console.error('Error tracking movie search:', error);
+      console.error('Error tracking search term:', error);
       throw error;
     }
   }
 
-  // Get trending movies
-  static async getTrendingMovies(limit = 10) {
+  // Get trending search terms with exponential decay
+  static async getTrendingSearchTerms(limit = 10) {
     try {
-      const movies = await Movie.find()
+      const terms = await SearchTerm.find()
         .sort({ trendingScore: -1, searchCount: -1 })
         .limit(limit);
       
-      return movies;
+      return terms;
     } catch (error) {
-      console.error('Error getting trending movies:', error);
+      console.error('Error getting trending search terms:', error);
       throw error;
     }
   }
 
-  // Get most searched movies
-  static async getMostSearchedMovies(limit = 10) {
+  // Get most searched terms
+  static async getMostSearchedTerms(limit = 10) {
     try {
-      const movies = await Movie.find()
+      const terms = await SearchTerm.find()
         .sort({ searchCount: -1 })
         .limit(limit);
       
-      return movies;
+      return terms;
     } catch (error) {
-      console.error('Error getting most searched movies:', error);
+      console.error('Error getting most searched terms:', error);
       throw error;
     }
   }
 
-  // Calculate trending score (you can customize this algorithm)
+  // Exponential decay trending score calculation
   static calculateTrendingScore(searchCount, lastSearched) {
     const now = new Date();
     const timeDiff = now - lastSearched;
     const daysSinceLastSearch = timeDiff / (1000 * 60 * 60 * 24);
     
-    // Simple trending algorithm: more searches = higher score, but decays over time
-    const baseScore = searchCount * 10;
-    const timeDecay = Math.max(0.1, 1 - (daysSinceLastSearch * 0.1));
+    // Exponential decay: score = searchCount * e^(-decayRate * days)
+    const decayRate = 0.1; // Adjust this for faster/slower decay
+    const timeDecay = Math.exp(-decayRate * daysSinceLastSearch);
     
-    return baseScore * timeDecay;
-  }
-
-  // Update trending scores for all movies
-  static async updateTrendingScores() {
-    try {
-      const movies = await Movie.find();
-      
-      for (const movie of movies) {
-        movie.trendingScore = this.calculateTrendingScore(movie.searchCount, movie.lastSearched);
-        await movie.save();
-      }
-      
-      console.log('Updated trending scores for all movies');
-    } catch (error) {
-      console.error('Error updating trending scores:', error);
-      throw error;
-    }
+    return searchCount * timeDecay;
   }
 }
 

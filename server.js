@@ -1,5 +1,4 @@
 require('dotenv').config();
-console.log('MONGODB_URI:', process.env.MONGODB_URI);
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/database');
@@ -16,45 +15,37 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.post('/api/track-search', async (req, res) => {
+app.post('/api/track-search-term', async (req, res) => {
   try {
-    const { movieData } = req.body;
-    const trackedMovie = await DatabaseService.trackMovieSearch(movieData);
-    res.json({ success: true, movie: trackedMovie });
+    const { searchTerm } = req.body;
+    const trackedTerm = await DatabaseService.trackSearchTerm(searchTerm);
+    res.json({ success: true, term: trackedTerm });
   } catch (error) {
-    console.error('Error tracking search:', error);
+    console.error('Error tracking search term:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
+// Trending search terms with exponential decay
 app.get('/api/trending', async (req, res) => {
   try {
     const { limit = 10 } = req.query;
-    const trendingMovies = await DatabaseService.getTrendingMovies(parseInt(limit));
-    res.json({ success: true, movies: trendingMovies });
+    const trendingTerms = await DatabaseService.getTrendingSearchTerms(parseInt(limit));
+    res.json({ success: true, terms: trendingTerms });
   } catch (error) {
-    console.error('Error getting trending movies:', error);
+    console.error('Error getting trending search terms:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
+// Most searched terms
 app.get('/api/most-searched', async (req, res) => {
   try {
     const { limit = 10 } = req.query;
-    const mostSearchedMovies = await DatabaseService.getMostSearchedMovies(parseInt(limit));
-    res.json({ success: true, movies: mostSearchedMovies });
+    const mostSearchedTerms = await DatabaseService.getMostSearchedTerms(parseInt(limit));
+    res.json({ success: true, terms: mostSearchedTerms });
   } catch (error) {
-    console.error('Error getting most searched movies:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/update-trending-scores', async (req, res) => {
-  try {
-    await DatabaseService.updateTrendingScores();
-    res.json({ success: true, message: 'Trending scores updated' });
-  } catch (error) {
-    console.error('Error updating trending scores:', error);
+    console.error('Error getting most searched terms:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
