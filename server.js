@@ -15,48 +15,25 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.post('/api/track-search', async (req, res) => {
+app.post('/api/track-popular', async (req, res) => {
   try {
     const { movieData } = req.body;
-    const trackedMovie = await DatabaseService.trackMovieSearch(movieData);
+    const trackedMovie = await DatabaseService.trackPopularMovie(movieData);
     res.json({ success: true, movie: trackedMovie });
   } catch (error) {
-    console.error('Error tracking search:', error);
+    console.error('Error tracking popular movie:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.post('/api/track-search-term', async (req, res) => {
-  try {
-    const { searchTerm } = req.body;
-    const trackedTerm = await DatabaseService.trackSearchTerm(searchTerm);
-    res.json({ success: true, term: trackedTerm });
-  } catch (error) {
-    console.error('Error tracking search term:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Trending movies with exponential decay
-app.get('/api/trending', async (req, res) => {
+// Popular movies (first results only)
+app.get('/api/popular', async (req, res) => {
   try {
     const { limit = 10 } = req.query;
-    const trendingMovies = await DatabaseService.getTrendingMovies(parseInt(limit));
-    res.json({ success: true, movies: trendingMovies });
+    const popularMovies = await DatabaseService.getPopularMovies(parseInt(limit));
+    res.json({ success: true, movies: popularMovies });
   } catch (error) {
-    console.error('Error getting trending movies:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Most searched terms
-app.get('/api/most-searched', async (req, res) => {
-  try {
-    const { limit = 10 } = req.query;
-    const mostSearchedTerms = await DatabaseService.getMostSearchedTerms(parseInt(limit));
-    res.json({ success: true, terms: mostSearchedTerms });
-  } catch (error) {
-    console.error('Error getting most searched terms:', error);
+    console.error('Error getting popular movies:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

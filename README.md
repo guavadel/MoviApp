@@ -29,8 +29,6 @@ This is the backend server for the Movie App that tracks trending movies based o
 
 - `POST /api/track-search` - Track a movie search
 - `GET /api/trending` - Get trending movies
-- `GET /api/most-searched` - Get most searched movies
-- `POST /api/update-trending-scores` - Update trending scores
 
 ## Database Schema
 

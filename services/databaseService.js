@@ -1,8 +1,8 @@
 const Movie = require('../models/Movie');
 
 class DatabaseService {
-  // Track movie search
-  static async trackMovieSearch(movieData) {
+  // Track popular movie (first result only)
+  static async trackPopularMovie(movieData) {
     try {
       const { id, title, overview, poster_path, release_date, vote_average, vote_count } = movieData;
       
@@ -30,13 +30,13 @@ class DatabaseService {
       
       return movie;
     } catch (error) {
-      console.error('Error tracking movie search:', error);
+      console.error('Error tracking popular movie:', error);
       throw error;
     }
   }
 
-  // Get trending movies with exponential decay
-  static async getTrendingMovies(limit = 10) {
+  // Get popular movies (first results only)
+  static async getPopularMovies(limit = 10) {
     try {
       const movies = await Movie.find()
         .sort({ trendingScore: -1, searchCount: -1 })
@@ -44,7 +44,7 @@ class DatabaseService {
       
       return movies;
     } catch (error) {
-      console.error('Error getting trending movies:', error);
+      console.error('Error getting popular movies:', error);
       throw error;
     }
   }
