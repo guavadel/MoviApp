@@ -1,4 +1,5 @@
 const Movie = require('../models/Movie');
+const SavedMovie = require('../models/SavedMovie');
 
 class DatabaseService {
   // Track popular movie (first result only)
@@ -45,6 +46,33 @@ class DatabaseService {
       return movies;
     } catch (error) {
       console.error('Error getting popular movies:', error);
+      throw error;
+    }
+  }
+
+  // Save a movie for a user
+  static async saveMovieForUser(userId, movieData) {
+    try {
+      const { tmdbId, title, posterPath } = movieData;
+      // Prevent duplicate saves
+      let saved = await SavedMovie.findOne({ userId, tmdbId });
+      if (!saved) {
+        saved = new SavedMovie({ userId, tmdbId, title, posterPath });
+        await saved.save();
+      }
+      return saved;
+    } catch (error) {
+      console.error('Error saving movie for user:', error);
+      throw error;
+    }
+  }
+
+  // Get all saved movies for a user
+  static async getSavedMoviesForUser(userId) {
+    try {
+      return await SavedMovie.find({ userId }).sort({ savedAt: -1 });
+    } catch (error) {
+      console.error('Error fetching saved movies for user:', error);
       throw error;
     }
   }
